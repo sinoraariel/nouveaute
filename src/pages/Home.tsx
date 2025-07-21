@@ -247,16 +247,6 @@ const Home: React.FC = () => {
                 />
               </div>
               
-              {/* Floating Badge */}
-              <div className="absolute -bottom-8 -left-8 bg-white p-6 rounded-2xl shadow-xl">
-                <div className="flex items-center space-x-3">
-                  <Shield className="h-8 w-8 text-secondary-600" />
-                  <div>
-                    <div className="text-lg font-bold text-neutral-900">Entreprise de </div>
-                    <div className="text-sm text-neutral-600">Grande renomée</div>
-                  </div>
-                </div>
-              </div>
 
               {/* Glow Effect */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-secondary-500/10 rounded-3xl blur-3xl -z-10"></div>

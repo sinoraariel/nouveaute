@@ -1,87 +1,45 @@
 import React from 'react';
 import { Download, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-
+import { useState, useEffect } from 'react';
+import {supabase} from "./images/SupabaseClient"
 interface Dossier {
   id: string;
   nom: string;
-  statut: 'en_cours' | 'termine' | 'en_attente';
-  dateTraitement: string;
+  statut: string;
+  date_traitement: string;
   type: string;
   taille: string;
+  url:string;
 }
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+   const { user } = useAuth();
+  const [dossiers, setDossiers] = useState<Dossier[]>([]);
 
-  // Données mockées - à remplacer par une vraie API
-  const dossiers: Dossier[] = [
-    {
-      id: '1',
-      nom: 'Bilan comptable 2023',
-      statut: 'termine',
-      dateTraitement: '2024-01-15',
-      type: 'Bilan',
-      taille: '2.4 MB'
-    },
-    {
-      id: '2',
-      nom: 'Déclaration TVA Q4 2023',
-      statut: 'termine',
-      dateTraitement: '2024-01-20',
-      type: 'TVA',
-      taille: '1.2 MB'
-    },
-    {
-      id: '3',
-      nom: 'Liasse fiscale 2023',
-      statut: 'en_cours',
-      dateTraitement: '2024-01-25',
-      type: 'Fiscal',
-      taille: '0 MB'
-    },
-    {
-      id: '4',
-      nom: 'Bilan social 2023',
-      statut: 'en_attente',
-      dateTraitement: '2024-01-30',
-      type: 'Social',
-      taille: '0 MB'
-    }
-  ];
+           const fetchDossiers = async () => {
+              const { data, error } = await supabase
+                .from('dossiers')
+                .select('*')
+                .order('id_dossier', { ascending: true })
+                console.log(data)
+          
+              if (error) console.log(error)
+              else setDossiers(data)
+            }
+          
+            useEffect(() => {
+              fetchDossiers()
+            }, [])
 
-  const getStatutBadge = (statut: string) => {
-    switch (statut) {
-      case 'termine':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <CheckCircle className="w-4 h-4 mr-1" />
-            Terminé
-          </span>
-        );
-      case 'en_cours':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            <Clock className="w-4 h-4 mr-1" />
-            En cours
-          </span>
-        );
-      case 'en_attente':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            <AlertCircle className="w-4 h-4 mr-1" />
-            En attente
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
+
+
+ 
 
   const handleDownload = (dossier: Dossier) => {
     // Simulation du téléchargement
     const link = document.createElement('a');
-    link.href = '#';
+    link.href = dossier.url;
     link.download = `${dossier.nom}.pdf`;
     link.click();
   };
@@ -166,27 +124,28 @@ const Dashboard: React.FC = () => {
                       <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
                         <span>Type: {dossier.type}</span>
                         <span>•</span>
-                        <span>Traité le: {new Date(dossier.dateTraitement).toLocaleDateString('fr-FR')}</span>
-                        {dossier.statut === 'termine' && (
-                          <>
-                            <span>•</span>
+                        <span>Traité le: {new Date(dossier.date_traitement).toLocaleDateString('fr-FR')}</span>
+                        <span>•</span>
                             <span>Taille: {dossier.taille}</span>
-                          </>
-                        )}
+                      
                       </div>
                     </div>
                   </div>
+                  
                   <div className="flex items-center space-x-4">
-                    {getStatutBadge(dossier.statut)}
-                    {dossier.statut === 'termine' && (
-                      <button
+                    <div>
+                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                      <Clock className="w-4 h-6 mr-1" />
+                        {dossier.statut}
+                    </span>
+                  </div>
+                    <button
                         onClick={() => handleDownload(dossier)}
                         className="bg-[#4A5FB6] text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                       >
                         <Download className="w-4 h-4" />
                         <span>Télécharger</span>
                       </button>
-                    )}
                   </div>
                 </div>
               </div>
