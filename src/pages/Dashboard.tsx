@@ -15,6 +15,12 @@ interface Dossier {
 
 const Dashboard: React.FC = () => {
    const { user } = useAuth();
+   const [statCounts, setStatCounts] = useState({
+  Termine: 0,
+  En_cours: 0,
+  En_attente: 0
+});
+
   const [dossiers, setDossiers] = useState<Dossier[]>([]);
 
            const fetchDossiers = async () => {
@@ -31,6 +37,35 @@ const Dashboard: React.FC = () => {
             useEffect(() => {
               fetchDossiers()
             }, [])
+        useEffect(() => {
+
+             const fetchStatCounts = async () => {
+    const { count: countTermine, error: error1 } = await supabase
+      .from("dossiers")
+      .select("*", { count: "exact", head: true })
+      .eq("statut", "Termine");
+
+    const { count: countEnCours, error: error2 } = await supabase
+      .from("dossiers")
+      .select("*", { count: "exact", head: true })
+      .eq("statut", "En_cours");
+
+    const { count: countEnAttente, error: error3 } = await supabase
+      .from("dossiers")
+      .select("*", { count: "exact", head: true })
+      .eq("statut", "En_attente");
+
+    if (!error1 && !error2 && !error3) {
+      setStatCounts({
+        Termine: countTermine || 0,
+        En_cours: countEnCours || 0,
+        En_attente: countEnAttente || 0
+      });
+    }
+  };
+
+  fetchStatCounts();
+}, []);
 
 
 
@@ -50,7 +85,7 @@ const Dashboard: React.FC = () => {
         {/* Header */}
         <div className="mb-8 mt-16">
           <h1 className="text-3xl font-bold text-gray-900">
-            Bienvenue, {user?.nom}
+            Bienvenue, {user.nom}
           </h1>
           <p className="text-gray-600 mt-2">
             Gérez vos dossiers comptables et téléchargez vos documents
@@ -66,7 +101,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {dossiers.filter(d => d.statut === 'termine').length}
+                  {statCounts.Termine}
                 </h3>
                 <p className="text-gray-600">Dossiers terminés</p>
               </div>
@@ -80,7 +115,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {dossiers.filter(d => d.statut === 'en_cours').length}
+                  {statCounts.En_cours}
                 </h3>
                 <p className="text-gray-600">En cours</p>
               </div>
@@ -94,7 +129,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {dossiers.filter(d => d.statut === 'en_attente').length}
+                  {statCounts.En_attente}
                 </h3>
                 <p className="text-gray-600">En attente</p>
               </div>
@@ -118,7 +153,7 @@ const Dashboard: React.FC = () => {
                       <FileText className="w-6 h-6  text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3  className="text-lg font-medium text-gray-900">
                         {dossier.nom}
                       </h3>
                       <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">

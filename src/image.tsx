@@ -7,6 +7,7 @@ interface User {
   email: string;
   telephone: string;
   numeroContribuable?: string;
+  password:string;
 }
 
 interface AuthContextType {
@@ -38,58 +39,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setLoading(false);
   }, []);
+
   const login = async (email: string, password: string): Promise<boolean> => {
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) return false;
 
-  if (authError || !authData.user) {
-    console.error('Login error:', authError?.message);
-    return false;
-  }
+    const { data: profile, error: profileError } = await supabase
+      .from('utilisateurs')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
 
-  const { data: profile, error: profileError } = await supabase
-    .from('utilisateurs')
-    .select('*')
-    .eq('email', email)
-    .single();
+    if (profileError || !profile) return false;
 
-  if (profileError || !profile) {
-    console.error('Profile error:', profileError?.message);
-    return false;
-  }
+    const userData: User = {
+      id: profile.id,
+      nom: profile.nom,
+      email: profile.email,
+      telephone: profile.telephone,
+      numeroContribuable: profile.numeroContribuable,
+      password:profile.password,
+    };
 
-  const userInfo = {
-    id: authData.user.id,
-    email: authData.user.email,
-    nom: profile.nom,
-    telephone: profile.telephone,
-    numeroContribuable: profile.numeroContribuable,
+    setUser(userData);
+    localStorage.setItem('brc_user', JSON.stringify(userData));
+    return true;
   };
-
-  localStorage.setItem('brc_user', JSON.stringify(userInfo));
-  setUser(userInfo);
-  return true;
-};
 
   const register = async (userData: Omit<User, 'id'> & { password: string }): Promise<boolean> => {
     const { data, error } = await supabase.auth.signUp({
       email: userData.email,
       password: userData.password,
-      options: {
-        data: {
-          nom: userData.nom,
-          telephone: userData.telephone,
-          numeroContribuable: userData.numeroContribuable,
-        },
-      },
     });
 
-    if (error || !data.user) {
-      console.error('Register error:', error?.message);
-      return false;
-    }
+    if (error || !data.user) return false;
+
+    const { error: insertError } = await supabase.from('utilisateurs').insert([
+      {
+        id: data.user.id,
+        nom: userData.nom,
+        email: userData.email,
+        telephone: userData.telephone,
+        numeroContribuable: userData.numeroContribuable,
+        password:userData.password,
+        },
+    ]);
+
+    if (insertError) return false;
 
     const newUser: User = {
       id: data.user.id,
@@ -97,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: userData.email,
       telephone: userData.telephone,
       numeroContribuable: userData.numeroContribuable,
+      password:userData.password,
     };
 
     setUser(newUser);

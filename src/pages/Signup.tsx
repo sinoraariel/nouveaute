@@ -40,7 +40,7 @@ const Signup: React.FC = () => {
       .from('utilisateurs')
       .insert([
         {
-          id_utilisateur: user.id, // Utilise l'ID généré par supabase
+          id: user.id, // Utilise l'ID généré par supabase
           nom: formData.nom,
           email: formData.email,
           telephone: formData.telephone,
